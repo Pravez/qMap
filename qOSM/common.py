@@ -1,4 +1,4 @@
-from qOSM.config import config
+from .config import config
 
 doTrace = False
 
@@ -10,12 +10,12 @@ import decorator
 backend = config['backend']
 
 if backend == "PyQt5":
-        from PyQt5.QtCore import pyqtSignal, QUrl
-        from PyQt5.QtGui import QDesktopServices
-        from PyQt5.QtNetwork import QNetworkDiskCache
-        from PyQt5.QtWebKit import QWebSettings
-        from PyQt5.QtWebKitWidgets import QWebPage, QWebView
-        from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtCore import pyqtSignal, QUrl
+    from PyQt5.QtGui import QDesktopServices
+    from PyQt5.QtNetwork import QNetworkDiskCache
+    from PyQt5.QtWebKit import QWebSettings
+    from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+    from PyQt5.QtWidgets import QApplication
 
 elif backend == "PyQt4":
     from PyQt4.QtCore import pyqtSignal, QUrl
@@ -23,14 +23,17 @@ elif backend == "PyQt4":
     from PyQt4.QtNetwork import QNetworkDiskCache
     from PyQt4.QtWebKit import QWebPage, QWebView, QWebSettings
 
+
 @decorator.decorator
 def trace(function, *args, **k):
     """Decorates a function by tracing the begining and
     end of the function execution, if doTrace global is True"""
 
-    if doTrace: print("> " + function.__name__, args, k)
+    if doTrace:
+        print("> " + function.__name__, args, k)
     result = function(*args, **k)
-    if doTrace: print("< " + function.__name__, args, k, "->", result)
+    if doTrace:
+        print("< " + function.__name__, args, k, "->", result)
     return result
 
 
@@ -115,5 +118,40 @@ class QOSM(QWebView):
                        "latitude= {}, "
                        "longitude= {});".format(key, latitude, longitude))
 
+    def removeMarker(self, key):
+        self.runScript("osm_deleteMarker(key={!r}".format(key))
+
     def positionMarker(self, key):
         return tuple(self.runScript("osm_posMarker(key={!r});".format(key)))
+
+    def setMarkerIcon(self, key, iconUrl):
+        self.runScript(
+            "osm_setMarkerIcon(key={!r}, iconUrl={})".format(key, iconUrl))
+
+    def drawPath(self, key, latlngs, color, fitBounds):
+        self.runScript("osm_drawPath(key={!r}, "
+                       "latlngs={}, "
+                       "color = \"{}\","
+                       "fitBounds= {})".format(key, latlngs, color, "true" if fitBounds else "false"))
+
+    def removePath(self, key):
+        self.runScript("osm_removePath(key={!r})".format(key))
+
+    def hasMarker(self, key):
+        self.runScript("osm_hasMarker(key={!r})".format(key))
+
+    def createMainMarker(self, latlng, color="red", fill_color="red", radius=1):
+        self.runScript("osm_createMainMarker(latlng={}, color=\"{}\", fillColor=\"{}\", radius={})".format([*latlng], color, fill_color, radius))
+
+    def moveMainMarker(self, latlng):
+        return self.runScript("osm_moveMainMarker(latlng={})".format([*latlng]))
+
+    def createMainWindow(self, window, color, fillColor, strokeSize):
+        self.runScript("osm_createMainWindow(p1={}, p2={}, p3={}, p4={}, color=\"{}\", fillColor=\"{}\", strokeSize={})"
+                       .format(*window, color, fillColor, strokeSize))
+
+    def moveMainWindow(self, window):
+        return self.runScript("osm_moveMainWindow(p1={}, p2={}, p3={}, p4={})".format(*window))
+
+    def clean(self):
+        self.runScript("osm_cleanEverything()")
