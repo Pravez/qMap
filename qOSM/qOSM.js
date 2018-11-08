@@ -1,6 +1,7 @@
 // Where you want to render the map.
 
 var map;
+var layer;
 
 var markers = [];
 
@@ -16,10 +17,11 @@ function initialize() {
 
     map = L.map(element);
 
-    L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+    layer = L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
         attribution:
             '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+    });
+    layer.addTo(map);
 
     if (typeof qtWidget !== "undefined") {
         map.on("dragend", function () {
@@ -53,7 +55,6 @@ function initialize() {
 }
 
 function osm_setCenter(lat, lng) {
-    //console.log(lat);
     map.panTo(new L.LatLng(lat, lng));
 }
 
@@ -168,7 +169,7 @@ function osm_hasMarker(key) {
     return markers.hasOwnProperty(key)
 }
 
-function osm_createMainMarker(latlng, color = "red", fillColor = "red", radius = 1) {
+function osm_createMainMarker(latlng, color = "orange", fillColor = "yellow", radius = 7) {
     mainMarker = L.circleMarker(latlng, {
         radius: radius,
         color: color,
@@ -181,15 +182,14 @@ function osm_createMainMarker(latlng, color = "red", fillColor = "red", radius =
 }
 
 function osm_moveMainMarker(latlng) {
-    if (mainMarker) {
-        mainMarker.setLatLng(latlng);
-        return true;
+    if(!mainMarker) {
+        osm_createMainMarker(latlng);
     }
 
-    return false;
+    mainMarker.setLatLng(latlng);
 }
 
-function osm_createMainWindow(p1, p2, p3, p4, color, fillColor, strokeSize) {
+function osm_createMainWindow(p1, p2, p3, p4, color="blue", fillColor="green", strokeSize=5) {
     mainWindow = L.polygon([p1, p2, p3, p4], {
         color: color,
         fillColor: fillColor,
@@ -202,12 +202,11 @@ function osm_createMainWindow(p1, p2, p3, p4, color, fillColor, strokeSize) {
 }
 
 function osm_moveMainWindow(p1, p2, p3, p4) {
-    if (mainWindow) {
-        mainWindow.setLatLngs([p1, p2, p3, p4]);
-        return true;
+    if(!mainWindow) {
+        osm_createMainWindow(p1, p2, p3, p4);
     }
 
-    return false;
+    mainWindow.setLatLngs([p1, p2, p3, p4]);
 }
 
 function osm_cleanEverything() {

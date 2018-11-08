@@ -11,18 +11,11 @@ backend = config['backend']
 
 if backend == "PyQt5":
     from PyQt5.QtCore import pyqtSignal, QUrl
-    from PyQt5.QtGui import QDesktopServices
-    from PyQt5.QtNetwork import QNetworkDiskCache
-    from PyQt5.QtWebKit import QWebSettings
-    from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+    from PyQt5.QtWebEngineWidgets import QWebEnginePage
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
     from PyQt5.QtWidgets import QApplication
-
-elif backend == "PyQt4":
-    from PyQt4.QtCore import pyqtSignal, QUrl
-    from PyQt4.QtGui import QDesktopServices, QApplication
-    from PyQt4.QtNetwork import QNetworkDiskCache
-    from PyQt4.QtWebKit import QWebPage, QWebView, QWebSettings
-
+else:
+    raise Exception("Works only with PyQt5")
 
 @decorator.decorator
 def trace(function, *args, **k):
@@ -37,13 +30,14 @@ def trace(function, *args, **k):
     return result
 
 
-class _LoggedPage(QWebPage):
+class _LoggedPage(QWebEnginePage):
     @trace
-    def javaScriptConsoleMessage(self, msg, line, source):
-        print('JS: %s line %d: %s' % (source, line, msg))
+    def javaScriptConsoleMessage(self, QWebEnginePage_JavaScriptConsoleMessageLevel, p_str, p_int, p_str_1):
+        print('[%s], JS: %s line %d: %s' % (QWebEnginePage_JavaScriptConsoleMessageLevel, p_str, p_int, p_str_1))
 
 
-class QOSM(QWebView):
+
+class QOSM(QWebEngineView):
     mapMoved = pyqtSignal(float, float)
     mapClicked = pyqtSignal(float, float)
     mapRightClicked = pyqtSignal(float, float)
@@ -55,30 +49,21 @@ class QOSM(QWebView):
     markerRightClicked = pyqtSignal(str, float, float)
 
     def __init__(self, parent=None, debug=True):
-        QWebView.__init__(self, parent=parent)
+        QWebEngineView.__init__(self, parent=parent)
 
-        cache = QNetworkDiskCache()
-        cache.setCacheDirectory("cache")
-        self.page().networkAccessManager().setCache(cache)
-        self.page().networkAccessManager()
-
-        if debug:
-            QWebSettings.globalSettings().setAttribute(
-                QWebSettings.DeveloperExtrasEnabled, True
-            )
+        self.page().profile().setCachePath("cache")
 
         self.initialized = False
 
-        self.page().mainFrame().addToJavaScriptWindowObject("qtWidget", self)
+        #self.page().mainFrame().addToJavaScriptWindowObject("qtWidget", self)
 
         basePath = os.path.abspath(os.path.dirname(__file__))
         url = 'file://' + basePath + '/qOSM.html'
         self.load(QUrl(url))
 
-        self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
 
         self.loadFinished.connect(self.onLoadFinished)
-        self.linkClicked.connect(QDesktopServices.openUrl)
+        #self.linkClicked.connect(QDesktopServices.openUrl)
 
     def onLoadFinished(self, ok):
         if self.initialized:
@@ -89,14 +74,14 @@ class QOSM(QWebView):
 
         self.initialized = True
         self.centerAt(0, 0)
-        self.setZoom(10)
+        self.setZoom(0)
 
     def waitUntilReady(self):
         while not self.initialized:
             QApplication.processEvents()
 
     def runScript(self, script):
-        return self.page().mainFrame().evaluateJavaScript(script)
+        return self.page().runJavaScript(script)
 
     def centerAt(self, latitude, longitude):
         self.runScript("osm_setCenter({}, {})".format(latitude, longitude))
@@ -152,6 +137,9 @@ class QOSM(QWebView):
 
     def moveMainWindow(self, window):
         return self.runScript("osm_moveMainWindow(p1={}, p2={}, p3={}, p4={})".format(*window))
+
+    def redraw(self):
+        return self.runScript("osm_redraw()")
 
     def clean(self):
         self.runScript("osm_cleanEverything()")
