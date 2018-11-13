@@ -1,3 +1,5 @@
+from PyQt5.QtWebChannel import QWebChannel
+
 from .config import config
 
 doTrace = False
@@ -10,7 +12,7 @@ import decorator
 backend = config['backend']
 
 if backend == "PyQt5":
-    from PyQt5.QtCore import pyqtSignal, QUrl
+    from PyQt5.QtCore import pyqtSignal, QUrl, QEvent, QObject
     from PyQt5.QtWebEngineWidgets import QWebEnginePage
     from PyQt5.QtWebEngineWidgets import QWebEngineView
     from PyQt5.QtWidgets import QApplication
@@ -48,6 +50,8 @@ class QOSM(QWebEngineView):
     markerDoubleClicked = pyqtSignal(str, float, float)
     markerRightClicked = pyqtSignal(str, float, float)
 
+
+
     def __init__(self, parent=None, debug=True):
         QWebEngineView.__init__(self, parent=parent)
 
@@ -55,15 +59,19 @@ class QOSM(QWebEngineView):
 
         self.initialized = False
 
-        #self.page().mainFrame().addToJavaScriptWindowObject("qtWidget", self)
 
         basePath = os.path.abspath(os.path.dirname(__file__))
         url = 'file://' + basePath + '/qOSM.html'
         self.load(QUrl(url))
 
+        self.web_channel = QWebChannel()
+        self.page().setWebChannel(self.web_channel)
+        self.web_channel.registerObject("qtWidget", self)
 
         self.loadFinished.connect(self.onLoadFinished)
         #self.linkClicked.connect(QDesktopServices.openUrl)
+
+
 
     def onLoadFinished(self, ok):
         if self.initialized:
@@ -141,5 +149,18 @@ class QOSM(QWebEngineView):
     def redraw(self):
         return self.runScript("osm_redraw()")
 
-    def clean(self):
-        self.runScript("osm_cleanEverything()")
+    def clear(self):
+        self.runScript("osm_clear()")
+
+    def clearMarkers(self):
+        self.runScript("osm_clearMarkers()")
+
+    def clearPaths(self):
+        self.runScript("osm_clearPaths()")
+
+    def clearMainObjects(self):
+        self.runScript("osm_clearMainWindowAndMarker()")
+
+    def getMarkerColor(self, key):
+        return self.runScript("osm_getMarkerColor(key={})".format(key))
+

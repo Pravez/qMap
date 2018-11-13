@@ -23,25 +23,6 @@ function initialize() {
     });
     layer.addTo(map);
 
-    if (typeof qtWidget !== "undefined") {
-        map.on("dragend", function () {
-            center = map.getCenter();
-            qtWidget.mapMoved(center.lat, center.lng);
-        });
-
-        map.on("click", function (ev) {
-            qtWidget.mapClicked(ev.latlng.lat, ev.latlng.lng);
-        });
-
-        map.on("dblclick", function (ev) {
-            qtWidget.mapDoubleClicked(ev.latlng.lat, ev.latlng.lng);
-        });
-
-        map.on("contextmenu", function (ev) {
-            qtWidget.mapRightClicked(ev.latlng.lat, ev.latlng.lng);
-        });
-    }
-
     LeafIcon = L.Icon.extend({
         options: {
             shadowUrl: "leaf-shadow.png",
@@ -51,6 +32,27 @@ function initialize() {
             shadowAnchor: [4, 62],
             popupAnchor: [-3, -76]
         }
+    });
+
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+        window.qtWidget = channel.objects.qtWidget;
+
+        /*map.on("dragend", function () {
+            center = map.getCenter();
+            qtWidget.mapEvent("moved", center.lat, center.lng);
+        });
+
+        map.on("click", function (ev) {
+            qtWidget.mapEvent("clicked", ev.latlng.lat, ev.latlng.lng);
+        });
+
+        map.on("dblclick", function (ev) {
+            qtWidget.mapEvent("doubleClicked", ev.latlng.lat, ev.latlng.lng);
+        });
+
+        map.on("contextmenu", function (ev) {
+            qtWidget.mapEvent("rightClicked", ev.latlng.lat, ev.latlng.lng);
+        });*/
     });
 }
 
@@ -79,17 +81,19 @@ function osm_addMarker(key, latitude, longitude, parameters) {
     }
 
     var marker = L.marker([latitude, longitude], parameters).addTo(map);
+    //marker.bindTooltip(key, {className: 'tooltipClass'}).openTooltip();
 
     if (typeof qtWidget !== "undefined") {
-        marker.on("dragend", function (event) {
+        /*marker.on("dragend", function (event) {
             var marker = event.target;
-            qtWidget.markerMoved(key, marker.getLatLng().lat, marker.getLatLng().lng);
+            qtWidget.markerEvent("moved", key, marker.getLatLng().lat, marker.getLatLng().lng);
         });
 
         marker.on("click", function (event) {
             var marker = event.target;
             //marker.bindPopup(parameters["title"]);
-            qtWidget.markerClicked(
+            qtWidget.markerEvent(
+                "clicked",
                 key,
                 marker.getLatLng().lat,
                 marker.getLatLng().lng
@@ -98,7 +102,8 @@ function osm_addMarker(key, latitude, longitude, parameters) {
 
         marker.on("dbclick", function (event) {
             var marker = event.target;
-            qtWidget.markerClicked(
+            qtWidget.markerEvent(
+                "doubleClicked",
                 key,
                 marker.getLatLng().lat,
                 marker.getLatLng().lng
@@ -107,12 +112,13 @@ function osm_addMarker(key, latitude, longitude, parameters) {
 
         marker.on("contextmenu", function (event) {
             var marker = event.target;
-            qtWidget.markerRightClicked(
+            qtWidget.markerEvent(
+                "rightClicked",
                 key,
                 marker.getLatLng().lat,
                 marker.getLatLng().lng
             );
-        });
+        });*/
     }
 
     markers[key] = marker;
@@ -182,14 +188,14 @@ function osm_createMainMarker(latlng, color = "orange", fillColor = "yellow", ra
 }
 
 function osm_moveMainMarker(latlng) {
-    if(!mainMarker) {
+    if (!mainMarker) {
         osm_createMainMarker(latlng);
     }
 
     mainMarker.setLatLng(latlng);
 }
 
-function osm_createMainWindow(p1, p2, p3, p4, color="blue", fillColor="green", strokeSize=5) {
+function osm_createMainWindow(p1, p2, p3, p4, color = "blue", fillColor = "green", strokeSize = 5) {
     mainWindow = L.polygon([p1, p2, p3, p4], {
         color: color,
         fillColor: fillColor,
@@ -202,19 +208,48 @@ function osm_createMainWindow(p1, p2, p3, p4, color="blue", fillColor="green", s
 }
 
 function osm_moveMainWindow(p1, p2, p3, p4) {
-    if(!mainWindow) {
+    if (!mainWindow) {
         osm_createMainWindow(p1, p2, p3, p4);
     }
 
     mainWindow.setLatLngs([p1, p2, p3, p4]);
 }
 
-function osm_cleanEverything() {
-    markers.forEach(element => element.remove());
-    marker.clear();
+function osm_clearMarkers() {
+    for(key in markers) {
+        if (markers.hasOwnProperty(key)) {
+            markers[key].remove();
+        }
+    }
+    markers = []
+}
 
-    mainWindow.remove();
-    mainWindow = undefined;
-    mainMarker.remove();
-    mainMarker = undefined;
+function osm_clearPaths() {
+    for(key in paths) {
+        if (paths.hasOwnProperty(key)) {
+            paths[key].remove();
+        }
+    }
+    paths = []
+}
+
+function osm_clearMainWindowAndMarker() {
+    if (mainWindow) {
+        mainWindow.remove();
+        mainWindow = undefined;
+    }
+    if (mainMarker) {
+        mainMarker.remove();
+        mainMarker = undefined;
+    }
+}
+
+function osm_clear() {
+    osm_clearPaths();
+    osm_clearMarkers();
+    osm_clearMainWindowAndMarker();
+}
+
+function osm_getMarkerColor(key) {
+    return marker[key].options.icon.options.iconUrl;
 }
