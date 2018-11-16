@@ -12,7 +12,7 @@ import decorator
 backend = config['backend']
 
 if backend == "PyQt5":
-    from PyQt5.QtCore import pyqtSignal, QUrl, QEvent, QObject
+    from PyQt5.QtCore import pyqtSignal, QUrl
     from PyQt5.QtWebEngineWidgets import QWebEnginePage
     from PyQt5.QtWebEngineWidgets import QWebEngineView
     from PyQt5.QtWidgets import QApplication

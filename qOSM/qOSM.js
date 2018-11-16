@@ -15,7 +15,7 @@ var LeafIcon;
 function initialize() {
     var element = document.getElementById("mapid");
 
-    map = L.map(element);
+    map = L.map(element, {zoomControl: false});
 
     layer = L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
         attribution:
@@ -195,13 +195,13 @@ function osm_moveMainMarker(latlng) {
     mainMarker.setLatLng(latlng);
 }
 
-function osm_createMainWindow(p1, p2, p3, p4, color = "blue", fillColor = "green", strokeSize = 5) {
+function osm_createMainWindow(p1, p2, p3, p4, color = "blue", fillColor = "#4c4cff", strokeSize = 2) {
     mainWindow = L.polygon([p1, p2, p3, p4], {
         color: color,
         fillColor: fillColor,
         weight: strokeSize,
         fill: true,
-        fillOpacity: 0.8
+        fillOpacity: 0.25
     });
 
     mainWindow.addTo(map)
