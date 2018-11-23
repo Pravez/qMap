@@ -112,14 +112,14 @@ class QOSM(QWebEngineView):
                        "longitude= {});".format(key, latitude, longitude))
 
     def removeMarker(self, key):
-        self.runScript("osm_deleteMarker(key={!r}".format(key))
+        self.runScript("osm_deleteMarker(key={!r})".format(key))
 
     def positionMarker(self, key):
         return tuple(self.runScript("osm_posMarker(key={!r});".format(key)))
 
     def setMarkerIcon(self, key, iconUrl):
         self.runScript(
-            "osm_setMarkerIcon(key={!r}, iconUrl={})".format(key, iconUrl))
+            "osm_setMarkerIcon(key={!r}, iconUrl=\"{}\")".format(key, iconUrl))
 
     def drawPath(self, key, latlngs, color, fitBounds):
         self.runScript("osm_drawPath(key={!r}, "
