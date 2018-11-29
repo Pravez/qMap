@@ -1,4 +1,3 @@
-from PyQt5.QtWebChannel import QWebChannel
 
 from .config import config
 
@@ -12,10 +11,11 @@ import decorator
 backend = config['backend']
 
 if backend == "PyQt5":
-    from PyQt5.QtCore import pyqtSignal, QUrl
+    from PyQt5.QtCore import pyqtSignal, QUrl, pyqtSlot, QObject
     from PyQt5.QtWebEngineWidgets import QWebEnginePage
     from PyQt5.QtWebEngineWidgets import QWebEngineView
     from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWebChannel import QWebChannel
 else:
     raise Exception("Works only with PyQt5")
 
@@ -37,8 +37,6 @@ class _LoggedPage(QWebEnginePage):
     def javaScriptConsoleMessage(self, QWebEnginePage_JavaScriptConsoleMessageLevel, p_str, p_int, p_str_1):
         print('[%s], JS: %s line %d: %s' % (QWebEnginePage_JavaScriptConsoleMessageLevel, p_str, p_int, p_str_1))
 
-
-
 class QOSM(QWebEngineView):
     mapMoved = pyqtSignal(float, float)
     mapClicked = pyqtSignal(float, float)
@@ -51,14 +49,12 @@ class QOSM(QWebEngineView):
     markerRightClicked = pyqtSignal(str, float, float)
 
 
-
     def __init__(self, parent=None, debug=True):
         QWebEngineView.__init__(self, parent=parent)
 
         self.page().profile().setCachePath("cache")
 
         self.initialized = False
-
 
         basePath = os.path.abspath(os.path.dirname(__file__))
         url = 'file://' + basePath + '/qOSM.html'
@@ -71,7 +67,9 @@ class QOSM(QWebEngineView):
         self.loadFinished.connect(self.onLoadFinished)
         #self.linkClicked.connect(QDesktopServices.openUrl)
 
-
+    @pyqtSlot(str, float, float)
+    def onMarkerClicked(self, key, latitude, longitude):
+        self.markerClicked.emit(key, latitude, longitude)
 
     def onLoadFinished(self, ok):
         if self.initialized:

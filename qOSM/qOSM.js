@@ -84,6 +84,17 @@ function osm_addMarker(key, latitude, longitude, parameters) {
     //marker.bindTooltip(key, {className: 'tooltipClass'}).openTooltip();
 
     if (typeof qtWidget !== "undefined") {
+
+        marker.on("click", function (event) {
+            var marker = event.target;
+            marker.bindPopup(parameters["title"]);
+            qtWidget.onMarkerClicked(
+                key,
+                marker.getLatLng().lat,
+                marker.getLatLng().lng
+            );
+        });
+
         /*marker.on("dragend", function (event) {
             var marker = event.target;
             qtWidget.markerEvent("moved", key, marker.getLatLng().lat, marker.getLatLng().lng);
