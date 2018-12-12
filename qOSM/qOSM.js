@@ -87,7 +87,7 @@ function osm_addMarker(key, latitude, longitude, parameters) {
 
         marker.on("click", function (event) {
             var marker = event.target;
-            marker.bindPopup(parameters["title"]);
+            //marker.bindPopup(parameters["title"]);
             qtWidget.onMarkerClicked(
                 key,
                 marker.getLatLng().lat,
