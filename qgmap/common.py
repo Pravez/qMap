@@ -1,3 +1,5 @@
+import sys
+
 from qgmap.config import config
 
 doTrace = False
@@ -105,7 +107,10 @@ class QGoogleMap(QWebView):
         self.page().mainFrame().addToJavaScriptWindowObject(
             "qtWidget", self)
 
-        basePath = os.path.abspath(os.path.dirname(__file__))
+        if getattr(sys, "frozen", False):
+            basePath = os.path.abspath(os.path.dirname(sys.executable))
+        else:
+            basePath = os.path.abspath(os.path.dirname(__file__))
         url = 'file://' + basePath + '/qgmap.html'
         self.load(QUrl(url))
 

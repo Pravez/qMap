@@ -1,3 +1,4 @@
+import sys
 
 from .config import config
 
@@ -56,7 +57,11 @@ class QOSM(QWebEngineView):
 
         self.initialized = False
 
-        basePath = os.path.abspath(os.path.dirname(__file__))
+        if getattr(sys, "frozen", False):
+            basePath = os.path.abspath(os.path.dirname(sys.executable))
+        else:
+            basePath = os.path.abspath(os.path.dirname(__file__))
+
         url = 'file://' + basePath + '/qOSM.html'
         self.load(QUrl(url))
 
